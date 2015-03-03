@@ -4,10 +4,6 @@
 # ------------------------
 - hosts: all
   sudo: yes
-  
-  vars:
-    ssh_keys_to_use: files/cloud.key
-    user: ubuntu
  
   pre_tasks:
     - name: Update APT cache

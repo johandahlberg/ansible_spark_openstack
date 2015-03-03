@@ -2,21 +2,17 @@
 
 - hosts: localhost
   connection: local
-  vars:
-    state: present # Set to absent to take down machines
-    nbr_of_slaves: 3
-    key_name: cloud_key
   tasks:
   - name: Create a new spark master instance 
     nova_compute:
-      state: "{{ state }}"
+      state: "{{ instance_state }}"
       name: spark-master
       image_id: 9bf957ba-a0ce-4513-ba8c-e80d42ea9faf
       key_name: "{{ key_name }}"
       wait_for: 200
       flavor_id: 4
       nics:
-        - net-id: b045a7de-5aa4-43a2-86ff-049fd1ba1884
+        - net-id: "{{ network_id }}"
       security_groups: spark,default
       meta:
         hostname: spark-master
@@ -25,14 +21,14 @@
 
   - name: Create a new spark slaves
     nova_compute:
-      state: "{{ state }}"
+      state: "{{ instance_state }}"
       name: "{{ item }}"
       image_id: 9bf957ba-a0ce-4513-ba8c-e80d42ea9faf
       key_name: "{{ key_name }}"
       wait_for: 200
       flavor_id: 4
       nics:
-        - net-id: b045a7de-5aa4-43a2-86ff-049fd1ba1884
+        - net-id: "{{ network_id }}"
       security_groups: spark,default
       meta:
         hostname: "{{ item }}"
