@@ -9,6 +9,12 @@ How to start it?
 -----------------
 - Create a host from which to run ansible in your OpenStack dashboard and associate a floating IP to is so that you can `ssh` in to it.
 - `ssh` to the machine you just created.
+- Install the pre-requisites:
+```
+sudo apt-get install python-pip python-dev
+sudo pip install ansible
+sudo pip install python-novaclient
+```
 - Clone this repository:
 ```
 git clone https://github.com/johandahlberg/ansible_spark_openstack.git
