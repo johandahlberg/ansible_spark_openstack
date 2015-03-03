@@ -1,0 +1,8 @@
+{% for host in groups['all'] %}
+  Host {{ hostvars[host].ansible_hostname }}
+  User ubuntu
+  IdentityFile {{ ssh_key.dest }}
+  StrictHostKeyChecking no
+
+{% endfor %}
+

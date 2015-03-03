@@ -1,0 +1,6 @@
+# A Spark Worker will be started on each of the machines listed below.
+
+{% for host in groups['spark_slaves'] %}
+{{ hostvars[host].ansible_hostname }}
+{% endfor %}
+

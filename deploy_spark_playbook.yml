@@ -1,0 +1,70 @@
+---
+# ------------------------
+# Deploy the general stuff
+# ------------------------
+- hosts: all
+  sudo: yes
+  
+  vars:
+    ssh_keys_to_use: files/cloud.key
+    user: ubuntu
+ 
+  pre_tasks:
+    - name: Update APT cache
+      apt: update_cache=yes
+
+  tasks:
+    - name: install java
+      apt: name=openjdk-7-jre state=present update_cache=yes
+
+    - name: disable net.ipv6.conf.all.disable_ipv6
+      sysctl: name=net.ipv6.conf.all.disable_ipv6 value=1 state=present
+
+    - name: disable net.ipv6.conf.default.disable_ipv6
+      sysctl: name=net.ipv6.conf.default.disable_ipv6 value=1 state=present
+ 
+    - name: disable net.ipv6.conf.lo.disable_ipv6
+      sysctl: name=net.ipv6.conf.lo.disable_ipv6 value=1 state=present
+
+    - name: distribute host file
+      template: src=templates/hosts.j2 dest=/etc/hosts
+
+    - name: deploy ssh-keys
+      copy: src={{ssh_keys_to_use}} dest=/home/{{ user }}/.ssh/
+      register: ssh_key
+
+    - name: distribute ssh config
+      template: src=templates/config.j2 dest=/home/{{ user }}/.ssh/config
+      register: ssh_debug
+
+    - name: download spark
+      get_url:
+        url=http://d3kbcqa49mib13.cloudfront.net/spark-1.2.1-bin-hadoop2.4.tgz 
+        dest=/opt/ 
+        sha256sum=8e618cf67b3090acf87119a96e5e2e20e51f6266c44468844c185122b492b454
+ 
+    - name: unzip spark
+      unarchive: copy=no src=/opt/spark-1.2.1-bin-hadoop2.4.tgz  dest=/opt
+
+    - name: deploy slaves configuration
+      template: src=templates/slaves.j2 dest=/opt/spark-1.2.1-bin-hadoop2.4/conf/slaves
+       
+# --------------------------------------------------
+# Kick of spark (making the master start the slaves)
+# --------------------------------------------------
+- hosts: spark_masters
+
+  tasks:
+
+    - name: stop spark master (if running)
+      command: /opt/spark-1.2.1-bin-hadoop2.4/sbin/stop-master.sh
+
+    - name: start spark master
+      shell: SPARK_MASTER_IP="{{ ansible_hostname }}" /opt/spark-1.2.1-bin-hadoop2.4/sbin/start-master.sh
+
+    - name: stop the slaves (if running)
+      shell: /opt/spark-1.2.1-bin-hadoop2.4/sbin/stop-slaves.sh
+
+    - name: start the slaves
+      shell: /opt/spark-1.2.1-bin-hadoop2.4/sbin/start-slaves.sh
+
