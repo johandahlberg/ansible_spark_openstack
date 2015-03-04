@@ -53,6 +53,6 @@ ssh -L 8080:spark-master:8080 -i <your key> ubuntu@<spark-master-ip>
 
 Acknowledements
 ---------------
-- Mikael Huss for sharing his insights on Spark and collaborating with me on this
-- Zeeshan Ali Shah(@zeeshanali) for helping me get going with OpenStack
+- Mikael Huss (@hussius) for sharing his insights on Spark and collaborating with me on this
+- Zeeshan Ali Shah (@zeeshanali) for helping me get going with OpenStack
 
