@@ -17,8 +17,14 @@ network_id: b045a7de-5aa4-43a2-86ff-049fd1ba1884
 # across the cluster. It' important that this key
 # does NOT use password protection
 ssh_keys_to_use: files/cloud.key
+ssh_public_key: files/cloud.key.pub
+# This is a ugly hack - but you have to give the
+# file name of the ssh-key your referencing above
+name_of_ssh_key: cloud.key
 
 # Name of the user used to install everything
 # on the remote systems
 user: ubuntu
 
+# Name of hadoop user
+hadoop_user: ubuntu

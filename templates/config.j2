@@ -1,7 +1,17 @@
+
+
+  Host 0.0.0.0
+  IdentityFile ~/.ssh/{{ name_of_ssh_key }}
+  StrictHostKeyChecking no
+
+  Host localhost
+  IdentityFile ~/.ssh/{{ name_of_ssh_key }}
+  StrictHostKeyChecking no
+
 {% for host in groups['all'] %}
   Host {{ hostvars[host].ansible_hostname }}
-  User ubuntu
-  IdentityFile {{ ssh_key.dest }}
+  #User ubuntu
+  IdentityFile ~/.ssh/{{ name_of_ssh_key }}
   StrictHostKeyChecking no
 
 {% endfor %}

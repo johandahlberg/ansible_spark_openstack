@@ -1,7 +1,9 @@
 Setting up a stand-alone spark cluster on OpenStack
 ===================================================
 
-This describes how start a stand alone [Spark](http://spark.apache.org/) cluster on open stack, using two [ansible](http://www.ansible.com) playbooks. This has been tested on the [Uppmax](http://www.uppmax.uu.se/) private cloud smog.
+This describes how start a standalone [Spark](http://spark.apache.org/) cluster on open stack, using two [ansible](http://www.ansible.com) playbooks. This has been tested on the [Uppmax](http://www.uppmax.uu.se/) private cloud smog.
+
+It will install spark and hdfs, and start the required services on the nodes. Please note that this is a proof-of-concept implementation, and that is is not ready for use in a production setting. Any pull requests to improve upon this to bring it closer to a production ready state are very much appreciated.
 
 The open stack dymamic inventory code presented here is adapted from: https://github.com/lukaspustina/dynamic-inventory-for-ansible-with-openstack
 
@@ -38,9 +40,9 @@ ansible-playbook -i localhost_inventory --private-key=<your_ssh_key> create_spar
 ```
 ansible-playbook -i openstack_inventory.py --private-key=<your_ssh_key> deploy_spark_playbook.yml
 ```
-- Once this has finished successfully your spark cluster should be up and running! `ssh` into the spark-master node and try your new Spark cluster it by kicking of a shell:
+- Once this has finished successfully your spark cluster should be up and running! `ssh` into the spark-master node and try your new Spark cluster it by kicking of a shell. Now you're ready to enter into the Spark world. Have fun!
 ```
-/opt/spark-1.2.1-bin-hadoop2.4/bin/spark-shell --master spark://spark-master:7077 --executor-memory 6G
+spark-shell --master spark://spark-master:7077 --executor-memory 6G
 ```
 
 Tips

@@ -5,6 +5,8 @@
 - hosts: all
   sudo: yes
 
+  vars:
+    ssh_public_key_content: "{{ lookup('file', ssh_public_key ) }}"
   vars_files:
     - vars/main.yml
  
@@ -13,6 +15,8 @@
       apt: update_cache=yes
 
   tasks:
+
+    # General tasks
     - name: install java
       apt: name=openjdk-7-jre state=present update_cache=yes
 
@@ -28,14 +32,54 @@
     - name: distribute host file
       template: src=templates/hosts.j2 dest=/etc/hosts
 
+    # Install hadoop
+    - name: create hadoop group
+      group: name=hadoop state=present
+
+    - name: create hadoop user
+      user: name={{ hadoop_user }} comment="Hadoop user" group=hadoop shell=/bin/bash
+
+    - name: Get hadoop 
+      get_url:
+        url=http://apache.mirrors.spacedump.net/hadoop/common/stable/hadoop-2.6.0.tar.gz 
+        dest=/usr/local/ 
+        sha256sum=7a2ef6e7f468afcae95d0f7214816033c7e5c7982454061ccb117896d58d279f
+
+    - name: unzip hadoop
+      unarchive: copy=no src=/usr/local/hadoop-2.6.0.tar.gz dest=/usr/local/ owner={{ hadoop_user }} group=hadoop
+
+    - name: set user and priviliges on hadoop
+      file: path=/usr/local/hadoop-2.6.0 owner={{ hadoop_user }} group=hadoop recurse=yes
+
+    - name: distribute hadoop conf
+      template: src=templates/hadoop-env.sh.j2 dest=/usr/local/hadoop-2.6.0/etc/hadoop/hadoop-env.sh
+
+    - name: distribute hadoop core-site.xml
+      template: src=templates/core-site.xml.j2 dest=/usr/local/hadoop-2.6.0/etc/hadoop/core-site.xml
+
+    - name: distribute hadoop hdfs-site.xml
+      template: src=templates/hdfs-site.xml.j2 dest=/usr/local/hadoop-2.6.0/etc/hadoop/hdfs-site.xml
+
+    # Setup ssh-setup for normal user and hadoop user    
+    - name: deploy authorized keys
+      authorized_key: user={{ item }} key="{{ ssh_public_key_content }}"
+      with_items:
+        - "{{ user }}"
+        - "{{ hadoop_user }}"
+
     - name: deploy ssh-keys
-      copy: src={{ssh_keys_to_use}} dest=/home/{{ user }}/.ssh/
-      register: ssh_key
+      copy: src={{ssh_keys_to_use}} dest=/home/{{ item }}/.ssh/
+      with_items:
+        - "{{ user }}"
+        - "{{ hadoop_user }}"
 
     - name: distribute ssh config
-      template: src=templates/config.j2 dest=/home/{{ user }}/.ssh/config
-      register: ssh_debug
+      template: src=templates/config.j2 dest=/home/{{ item }}/.ssh/config
+      with_items:
+        - "{{ user }}"
+        - "{{ hadoop_user }}"
 
+    # Spark stuff      
     - name: download spark
       get_url:
         url=http://d3kbcqa49mib13.cloudfront.net/spark-1.2.1-bin-hadoop2.4.tgz 
@@ -43,13 +87,53 @@
         sha256sum=8e618cf67b3090acf87119a96e5e2e20e51f6266c44468844c185122b492b454
  
     - name: unzip spark
-      unarchive: copy=no src=/opt/spark-1.2.1-bin-hadoop2.4.tgz  dest=/opt
+      unarchive: copy=no src=/opt/spark-1.2.1-bin-hadoop2.4.tgz dest=/opt
 
     - name: deploy slaves configuration
-      template: src=templates/slaves.j2 dest=/opt/spark-1.2.1-bin-hadoop2.4/conf/slaves
-       
+      template: src=templates/slaves.j2 dest=/opt/spark-1.2.1-bin-hadoop2.4/conf/slaves 
+
+    - name: deploy spark-env.sh configuration
+      template: src=templates/spark-env.sh.j2 dest=/opt/spark-1.2.1-bin-hadoop2.4/conf/spark-env.sh
+
+# --------------------------------------------------
+# Start the hadoop master
+# --------------------------------------------------
+- hosts: spark_masters
+  vars_files:
+    - vars/main.yml
+
+
+  tasks:
+    - name: distribute hadoop slaves file
+      template: src=templates/masters.j2 dest=/usr/local/hadoop-2.6.0/etc/hadoop/masters
+
+    - name: distribute hadoop slaves file
+      template: src=templates/slaves.j2 dest=/usr/local/hadoop-2.6.0/etc/hadoop/slaves
+
+    - name: format hdfs (unless it's already been done)
+      command: /usr/local/hadoop-2.6.0/bin/hadoop namenode -format creates=/usr/local/hadoop-2.6.0/ansible-format-hdfs
+   
+    - name: touch hfds formatted file (indicates if hdfs has been formatted)
+      file: state=touch path=/usr/local/hadoop-2.6.0/ansible-format-hdfs
+
+    - name: add hadoop and spark binaries to path for hadoop user
+      lineinfile:
+        dest=/home/{{ hadoop_user }}/.bashrc 
+        state=present insertafter=EOF 
+        line="export PATH=$PATH:/usr/local/hadoop-2.6.0/bin/:/opt/spark-1.2.1-bin-hadoop2.4/bin/"
+        create=true
+      tags:
+        - current
+
+    - name: stop hadoop (if running)
+      command: /usr/local/hadoop-2.6.0/sbin/stop-dfs.sh
+
+    - name: start hadoop
+      command: /usr/local/hadoop-2.6.0/sbin/start-dfs.sh
+
 # --------------------------------------------------
 # Kick of spark (making the master start the slaves)
+# and configure spark-master as hadoop master
 # --------------------------------------------------
 - hosts: spark_masters
 
