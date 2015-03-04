@@ -28,17 +28,19 @@ nova secgroup-create spark "internal security group for spark"
 nova secgroup-add-group-rule spark spark tcp 1 65535
 ```
 - Setup the name of your network. `export OS_NETWORK_NAME="<name of your network>"` If you like you can add this to your OpenStack RC file, or set it in your `bash_rc`. (You can find the name of your network in your OpenStack dashboard)
-- First run the playbook which creates your nodes. Open `create_spark_cloud_playbook.yml` and edit variables to set your ssh-key and how many workers you want to create, then run:
+
+- Edit the setup variables to fit your setup. Open `vars/main.yml` and setup the variables as explained there.
+- One all the variables are in place you should now be able to create your instances:
 ```
 ansible-playbook -i localhost_inventory --private-key=<your_ssh_key> create_spark_cloud_playbook.yml
 ```
-- Open: `deploy_spark_playbook.yml` and set the `ssh_keys_to_use` variable to your ssh-key. Then install spark on the nodes (I've noticed that sometimes it takes a while for the ssh-server on the nodes to start, so if you get an initial ssh-error, wait a few minutes and try again).
+- Then install spark on the nodes (I've noticed that sometimes it takes a while for the ssh-server on the nodes to start, so if you get an initial ssh-error, wait a few minutes and try again).
 ```
 ansible-playbook -i openstack_inventory.py --private-key=<your_ssh_key> deploy_spark_playbook.yml
 ```
 - Once this has finished successfully your spark cluster should be up and running! `ssh` into the spark-master node and try your new Spark cluster it by kicking of a shell:
 ```
-./opt/spark-1.2.1-bin-hadoop2.4/bin/spark-shell --master spark://spark-master:7077 --executor-memory 6G
+/opt/spark-1.2.1-bin-hadoop2.4/bin/spark-shell --master spark://spark-master:7077 --executor-memory 6G
 ```
 
 Tips
