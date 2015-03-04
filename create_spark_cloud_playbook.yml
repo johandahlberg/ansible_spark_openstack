@@ -2,6 +2,8 @@
 
 - hosts: localhost
   connection: local
+  vars_files:
+    - vars/main.yml
   tasks:
   - name: Create a new spark master instance 
     nova_compute:
