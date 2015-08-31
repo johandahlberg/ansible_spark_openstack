@@ -13,7 +13,7 @@ How to start it?
 - `ssh` to the machine you just created.
 - Install the pre-requisites:
 ```
-sudo apt-get install python-pip python-dev
+sudo apt-get install python-pip python-dev git
 sudo pip install ansible
 sudo pip install python-novaclient
 ```
