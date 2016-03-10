@@ -53,6 +53,10 @@ If you don't want to open the web-facing ports you can use ssh-forwarding to rea
 ssh -L 8080:spark-master:8080 -i <your key> ubuntu@<spark-master-ip>
 ```
 
+Licence
+-------
+MIT
+
 Acknowledements
 ---------------
 - Mikael Huss (@hussius) for sharing his insights on Spark and collaborating with me on this
